@@ -274,7 +274,11 @@ def analyze(tickers, p="2y", wf=False, jonly=False):
 
 # ── Report ────────────────────────────────────────────────────────────────
 def report(r):
-    s=r["stats"]; bw=sorted(s.items(),key=lambda x:x[1]["wr5"],reverse=True)
+    s=r["stats"]
+    # Use absolute win rate for all patterns in sorting
+    for k, v in s.items():
+        v["abs_wr"] = abs(v["wr5"])
+    bw=sorted(s.items(),key=lambda x:x[1]["abs_wr"],reverse=True)
     bsh=sorted(s.items(),key=lambda x:x[1]["sh5"],reverse=True); br=sorted(s.items(),key=lambda x:x[1]["ar5"],reverse=True)
     print(f'\n╔══════════════════════════════════════════════════════════════════════╗\n║  📊 PATTERN ANALYZER v2 — {r["total_n"]} sig / {r["total_tp"]} tkrs ║\n╚══════════════════════════════════════════════════════════════════════╝\n')
     print("  🏆 TOP 12 BY 5-DAY WIN RATE")
