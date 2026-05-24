@@ -217,7 +217,7 @@ def walk_fwd(sigs, ns=4):
 
 # ── Analysis Engine ───────────────────────────────────────────────────────
 def analyze(tickers, p="2y", wf=False, jonly=False):
-    ps=defaultdict(lambda:{"n":0,"w5":0,"r3":0.0,"r5":0.0,"r10":0.0,"r20":0.0,"r5sq":0.0,"b5":-999.0,"w5":999.0,"bt":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"bs":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"br":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"bm":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"by_t":defaultdict(int)})
+    ps=defaultdict(lambda:{"n":0,"wins":0,"r3":0.0,"r5":0.0,"r10":0.0,"r20":0.0,"r5sq":0.0,"best":-999.0,"worst":999.0,"bt":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"bs":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"br":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"bm":defaultdict(lambda:{"n":0,"w":0,"r":0.0}),"by_t":defaultdict(int)})
     all_sigs=[]; tp=0; ts=0
     vd=get_vix(p)
     if not jonly: print(f"\n  📡 {len(tickers)} tkrs ({p})...\n  {'─'*55}")
@@ -247,16 +247,16 @@ def analyze(tickers, p="2y", wf=False, jonly=False):
                         if d==5:
                             st["r5sq"]+=ret**2
                             if ret>0:
-                                st["w5"]+=1;bt["w"]+=1;bs["w"]+=1;br["w"]+=1;bm["w"]+=1
+                                st["wins"]+=1;bt["w"]+=1;bs["w"]+=1;br["w"]+=1;bm["w"]+=1
                             bt["r"]+=ret;bs["r"]+=ret;br["r"]+=ret;bm["r"]+=ret
-                            st["b5"]=max(st["b5"],ret);st["w5"]=min(st["w5"],ret)
+                            st["best"]=max(st["best"],ret);st["worst"]=min(st["worst"],ret)
             if not jonly: print(f"  ✅ {len(res):3d} sig")
         except Exception as e:
             if not jonly: print(f"  ❌ {str(e)[:50]}")
     final={}
     for pn,s in sorted(ps.items(),key=lambda x:x[1]["n"],reverse=True):
         if s["n"]<MIN_SIG: continue
-        wr5=s["w5"]/s["n"]*100; av5=s["r5"]/s["n"]; av3=s["r3"]/s["n"]; av10=s["r10"]/s["n"]; av20=s["r20"]/s["n"]
+        wr5=s["wins"]/s["n"]*100; av5=s["r5"]/s["n"]; av3=s["r3"]/s["n"]; av10=s["r10"]/s["n"]; av20=s["r20"]/s["n"]
         var=s["r5sq"]/s["n"]-av5**2; std=math.sqrt(var) if var>0 else 0.001; sh=av5/std if std>0 else 0
         bt=max(s["bt"].items(),key=lambda x:x[1]["r"]/x[1]["n"] if x[1]["n"]>0 else -999)
         bs=max(s["bs"].items(),key=lambda x:x[1]["r"]/x[1]["n"] if x[1]["n"]>0 else -999)
@@ -264,7 +264,7 @@ def analyze(tickers, p="2y", wf=False, jonly=False):
         bm=max(s["bm"].items(),key=lambda x:x[1]["r"]/x[1]["n"] if x[1]["n"]>0 else -999)
         final[pn]={"n":s["n"],"dir":DIR.get(pn,"long"),"type":list(s["by_t"].keys())[0] if s["by_t"] else "?",
             "wr5":round(wr5,1),"ar3":round(av3,2),"ar5":round(av5,2),"ar10":round(av10,2),"ar20":round(av20,2),
-            "sh5":round(sh,3),"b5":round(s["b5"],2),"w5":round(s["w5"],2),
+            "sh5":round(sh,3),"best":round(s["best"],2),"worst":round(s["worst"],2),
             "best_t":bt[0],"best_tr":round(bt[1]["r"]/bt[1]["n"],2) if bt[1]["n"]>0 else 0,"best_tn":bt[1]["n"],
             "best_s":bs[0],"best_sr":round(bs[1]["r"]/bs[1]["n"],2) if bs[1]["n"]>0 else 0,
             "best_reg":br[0],"best_reg_r":round(br[1]["r"]/br[1]["n"],2) if br[1]["n"]>0 else 0,
